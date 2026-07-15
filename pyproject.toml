@@ -1,0 +1,52 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "eve-robot"
+version = "0.2.0"
+description = "Control software for the EVE Raspberry Pi companion robot"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "EVE Robot Team"}]
+dependencies = [
+  "Adafruit-Blinka",
+  "adafruit-circuitpython-rgb-display",
+  "numpy",
+  "openai",
+  "paho-mqtt==1.6.1",
+  "Pillow",
+  "pydub",
+  "pygame",
+  "pyserial",
+  "requests",
+  "scikit-fuzzy",
+  "sounddevice",
+  "SpeechRecognition",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.5"]
+
+[project.scripts]
+eve-robot = "main:main"
+
+[tool.setuptools]
+py-modules = ["main"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+namespaces = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+exclude = ["src/mpu/mpu.py"]
+
+[tool.ruff.lint]
+ignore = ["E702", "E741"]

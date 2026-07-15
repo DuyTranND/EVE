@@ -1,0 +1,13 @@
+Adafruit-Blinka
+adafruit-circuitpython-rgb-display
+numpy
+paho-mqtt==1.6.1
+openai
+Pillow
+pydub
+pygame
+pyserial
+requests
+scikit-fuzzy
+SpeechRecognition
+sounddevice

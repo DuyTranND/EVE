@@ -1,0 +1,17 @@
+[Unit]
+Description=EVE robot controller
+After=network-online.target sound.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/EVE
+EnvironmentFile=-/home/pi/EVE/.env
+ExecStart=/home/pi/EVE/.venv/bin/eve-robot
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target
