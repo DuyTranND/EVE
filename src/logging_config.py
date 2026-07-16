@@ -2,7 +2,7 @@
 
 import logging
 
-from src.config import settings
+from src.settings import settings
 
 
 def configure_logging() -> None:

@@ -28,32 +28,32 @@ to the robot and are easier to operate and diagnose on the host.
 ```text
 .
 ├── main.py                     Main application and worker lifecycle
-├── gen.py                      Standalone camera/vision experiment
+├── camera_vision_demo.py       Standalone camera/vision experiment
 ├── pyproject.toml              Package metadata and development tools
 ├── requirements.txt            Runtime Python dependencies
 ├── deploy/eve.service          Example systemd unit
 ├── tests/                       Hardware-independent unit tests
 └── src/
-    ├── config.py                Environment-based settings and paths
-    ├── models.py                Robot modes and expression enums
-    ├── resource.py              Lazy hardware/network resource wrapper
-    ├── variables/variables.py   Shared multiprocessing state and resources
-    ├── utility/
-    │   ├── audio.py             Lazy audio playback
-    │   ├── friendship.py        Friendliness persistence
-    │   ├── images.py            Image composition
-    │   ├── motion.py            Differential-drive calculations
-    │   └── utils.py             Robot commands and high-level behaviors
-    ├── cam/                     Picamera2 adapter
-    ├── com/                     ESP motor/servo and battery communication
-    ├── fuzzy/                   Fuzzy controllers and serialized models
-    ├── lcd/                     Display driver and expression frames
-    ├── mic/                     Microphone capture
+    ├── settings.py              Environment-based settings and paths
+    ├── domain.py                Robot modes and expression enums
+    ├── resources.py             Lazy hardware/network resource wrapper
+    ├── runtime/state.py         Shared multiprocessing state and resources
+    ├── utilities/
+    │   ├── audio_playback.py    Lazy audio playback
+    │   ├── friendliness.py      Friendliness persistence
+    │   ├── image_processing.py  Image composition
+    │   ├── kinematics.py        Differential-drive calculations
+    │   └── robot_behaviors.py   Robot commands and high-level behaviors
+    ├── camera/                  Picamera2 adapter
+    ├── controller/              ESP motor/servo and battery communication
+    ├── fuzzy_logic/             Fuzzy controllers and serialized models
+    ├── display/                 Display driver and expression frames
+    ├── microphone/              Microphone capture
     ├── mqtt/                    MQTT clients and payload codecs
-    ├── mpu/                     MPU9250/AK8963 driver
-    ├── openapi/                 OpenAI adapter and generated media
-    ├── rgb/                     RGB light driver
-    └── speaker/audio_package/   Prerecorded voice and sound assets
+    ├── imu/                     MPU9250/AK8963 driver
+    ├── openai_client/           OpenAI adapter and generated media
+    ├── lighting/                RGB light driver
+    └── audio/assets/            Prerecorded voice and sound assets
 ```
 
 Hardware and network resources are created only when the application starts or
@@ -210,8 +210,8 @@ ruff check .
 ```
 
 Do not import or execute `main.py` on a non-Raspberry Pi machine. It intentionally
-loads GPIO-bound behavior code. Import modules such as `src.utility.motion`,
-`src.utility.images`, and `src.mqtt.messages` for hardware-independent work.
+loads GPIO-bound behavior code. Import modules such as `src.utilities.kinematics`,
+`src.utilities.image_processing`, and `src.mqtt.messages` for hardware-independent work.
 
 ## Media Assets
 
@@ -222,7 +222,7 @@ Expression directories follow a state-transition convention:
 - `<expression>_to_idle` returns to the neutral face.
 - Numbered JPG files are displayed in numeric order and must remain contiguous.
 
-The vision and drawing features modify the `show` and `paint` expression frames
+The vision and drawing features modify the `show` and `painting` expression frames
 at runtime. The service account therefore needs write access to the repository's
 asset directories.
 

@@ -1,0 +1,213 @@
+import digitalio
+import board
+from PIL import Image, ImageDraw
+from adafruit_rgb_display import ili9341
+
+import os
+
+import time
+import random
+from src.settings import settings
+
+class LCD():  
+    def __init__(self):
+        self.CS = digitalio.DigitalInOut(board.CE1)
+        self.DC = digitalio.DigitalInOut(board.D17)
+        self.RES = digitalio.DigitalInOut(board.D23)
+        self.LED = digitalio.DigitalInOut(board.D24)
+        self.LED.direction = digitalio.Direction.OUTPUT
+        
+        self.BAUDRATE = 60000000
+
+        self.SPI = board.SPI()
+        self.screen = ili9341.ILI9341(self.SPI, rotation = 270, cs = self.CS, dc = self.DC, rst = self.RES, baudrate = self.BAUDRATE)
+        self.width, self.height = self.get_size()
+
+        self.draw_blank()
+        self.current_index = 0
+        self.current_express = "idle_bello" if random.randint(0, 1) == 0 else "idle_hi"
+
+        self.expression_path = str(settings.paths.expressions)
+        self.load_package()
+        self.switch(on = True)
+
+        self.fps = 16
+
+    def load_package(self):
+        self.package = {}
+        for expression_pack in os.listdir(self.expression_path):
+            for expression in os.listdir(f"{self.expression_path}/{expression_pack}"):
+                self.package[expression] = []
+                n_images = len(os.listdir(f"{self.expression_path}/{expression_pack}/{expression}"))
+                for i in range(n_images):
+                    self.package[expression].append(f"{self.expression_path}/{expression_pack}/{expression}/{i}.jpg")
+
+    def get_size(self):
+        if self.screen.rotation % 180 == 90:
+            height = self.screen.width 
+            width = self.screen.height
+        else:
+            width = self.screen.width 
+            height = self.screen.height
+        return width, height
+
+    def load_image(self, path):
+        image = Image.open(path)
+        # image = self.resize_image(image)
+        return image
+
+    def resize_image(self, image):
+        # Scale the image to the smaller screen dimension
+        image_ratio = image.width / image.height
+        screen_ratio = self.width / self.height
+
+        if screen_ratio < image_ratio:
+            scaled_width = image.width * self.height // image.height
+            scaled_height = self.height
+        else:
+            scaled_width = self.width
+            scaled_height = image.height * self.width // image.width
+
+        image = image.resize((scaled_width, scaled_height), Image.BICUBIC)
+
+        # Crop and center the image
+        x = scaled_width // 2 - self.width // 2
+        y = scaled_height // 2 - self.height // 2
+
+        image = image.crop((x, y, x + self.width, y + self.height))
+
+        return image
+
+    def show_expression(self, express):
+        if express not in self.current_express:
+            if "idle" not in express:
+                self.current_express = "idle" + "_to_" + express
+                self.current_index = 0
+            else:
+                if "idle" not in self.current_express:
+                    self.current_express = self.current_express + "_to_" + "idle"
+                    self.current_index = 0
+                else:
+                    self.current_express = express
+                    self.current_index = 0
+        self.draw_expression()
+
+    def switch(self, on = True):
+        self.LED.value = on
+            
+    def draw_image(self, image):
+        self.screen.image(image)
+        time.sleep(0.01)
+
+    def draw_blank(self):
+        image = Image.new("RGB", (self.width, self.height))
+
+        # Get drawing object to draw on image.
+        draw = ImageDraw.Draw(image)
+
+        # Draw a black filled box to clear the image.
+        draw.rectangle((0, 0, self.width, self.height), outline=0, fill=(0, 0, 0))
+
+        self.draw_image(image)
+
+    def draw_expression(self):
+        start_drawing = time.perf_counter()
+        image = self.load_image(self.package[self.current_express][self.current_index])
+        self.draw_image(image)
+        
+        self.current_index += 1
+
+        if self.current_index >= len(self.package[self.current_express]):
+            if self.current_express.startswith("idle_to_"):
+                self.current_express = self.current_express.removeprefix("idle_to_")
+            elif self.current_express.endswith("_to_idle"):
+                self.current_express = "idle"
+            if "idle" in self.current_express:
+                idle_express = self.current_express
+                while idle_express == self.current_express:
+                    idle_express = random.choices(["idle_01", "idle_02", "idle_03", "idle_04", "idle_05", "idle_06", "idle_07", "idle_08", "idle_09", "idle_10", "idle_11"], 
+                                                  [    0.8,    0.02,    0.02,    0.02,    0.02,    0.02,    0.02,    0.02,    0.02,     0.02,     0.02])[0]
+                    if idle_express == "idle_01":
+                        break
+                
+                self.current_express = idle_express
+            self.current_index = 0
+        
+        stop_drawing = time.perf_counter() - start_drawing
+        if stop_drawing < 1 / self.fps:
+            time.sleep(1 / self.fps - stop_drawing)
+
+
+if __name__ == "__main__":
+    lcd = LCD()
+    timing = time.perf_counter()
+    express = lcd.current_express
+    exps = list(lcd.package.keys())
+    exps = [element for element in exps if 'to' not in element]
+    i = 0
+    time.sleep(1)         
+    
+    express_dictionary = ["idle",               # 0
+                      "angry",              # 1
+                      "glare",              # 2
+                      "happy",              # 3
+                      "love",               # 4
+                      "sad",                # 5
+                      "sleep",              # 6
+                      "wrinkle",            # 7
+                      "idle_bello",         # 8
+                      "idle_birthday",      # 9
+                      "idle_cat",           # 10
+                      "idle_cow",           # 11
+                      "idle_dizzy",         # 12
+                      "idle_dog",           # 13
+                      "idle_duck",          # 14
+                      "idle_elephant",      # 15
+                      "idle_hi",            # 16
+                      "idle_what",          # 17
+                      "idle_optimus",       # 18
+                      "idle_unknown",       # 19
+                      "idle_what_alt",      # 20
+                      "idle_optimus_alt",   # 21
+                      "idle_angry_alt_1",   # 22
+                      "idle_angry_alt_2",   # 23
+                      "idle_angry_alt_3",   # 24
+                      "idle_bye",           # 25
+                      "idle_love",          # 26
+                      "idle_mumble",        # 27
+                      "idle_let_me_see",    # 28
+                      "idle_01",            # 29
+                      "idle_02",            # 30
+                      "idle_03",            # 31
+                      "idle_04",            # 32
+                      "idle_05",            # 33
+                      "idle_06",            # 34
+                      "idle_07",            # 35
+                      "idle_08",            # 36
+                      "idle_09",            # 37
+                      "idle_10",            # 38
+                      "idle_11",            # 39
+                      "idle_battery",       # 40
+                      "talking",            # 41
+                      "listening_01",       # 42
+                      "listening_02",       # 43
+                      "wrinkle_alt",        # 44
+                      "thinking",           # 45
+                      "painting",           # 46
+                      "idle_hate",          # 47
+                      ]        
+
+    # exp = express_dictionary[25]
+    # exp = express_dictionary[40]
+    lcd = LCD()
+    time.sleep(1)    
+    i = 0
+    anm = ["cat", "cow", "dog", "duck", "elephant"]
+    exp = "idle_" + anm[i]
+    while True:
+        st = time.perf_counter()
+        lcd.show_expression(exp)
+        print(1 / (time.perf_counter() - st))
+        if lcd.current_express == exp and lcd.current_index == len(lcd.package[lcd.current_express]) - 1:
+            i += 1 % 5
+            exp = "idle_" + anm[i]

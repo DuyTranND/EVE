@@ -7,11 +7,11 @@ from threading import Thread
 
 import RPi.GPIO as GPIO
 
-from src.config import settings
-from src.models import EXPRESSION_NAMES, Expression, RobotMode
+from src.settings import settings
+from src.domain import EXPRESSION_NAMES, Expression, RobotMode
 from src.logging_config import configure_logging
-from src.utility.audio import play_sound
-from src.utility.utils import (
+from src.utilities.audio_playback import play_sound
+from src.utilities.robot_behaviors import (
     follow_process,
     go_around_process,
     got_error,
@@ -24,7 +24,7 @@ from src.utility.utils import (
     touch_setup,
     vc_setup,
 )
-from src.variables.variables import (
+from src.runtime.state import (
     acting,
     battery,
     cam,
@@ -52,7 +52,7 @@ def request_shutdown(signum, frame):
 def lcd_process():
     while running.is_set():
         try:
-            if lcd.current_express == "idle_optimus" or lcd.current_express == "idle_optimus2":
+            if lcd.current_express in {"idle_optimus", "idle_optimus_alt"}:
                 if lcd.current_index == 1:
                     lcd.fps = 10
                 elif lcd.current_index == len(lcd.package[lcd.current_express]) - 1:
@@ -65,7 +65,7 @@ def lcd_process():
                 with express.get_lock():
                     express.value = Expression.IDLE
 
-            if lcd.current_express == "idle5" and lcd.current_index == 0:
+            if lcd.current_express == "idle_05" and lcd.current_index == 0:
                 look_around.set()
                 time.sleep(0.2)
 
